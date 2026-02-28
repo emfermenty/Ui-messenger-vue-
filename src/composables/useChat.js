@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue'
-import { useAuthStore } from '@/stores/Auth'
+import { useAuthStore } from '@/stores/auth'
 
 export function useChat() {
   const authStore = useAuthStore()
