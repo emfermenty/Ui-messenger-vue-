@@ -38,7 +38,7 @@
       <div v-if="loginError" class="error-message">{{ loginError }}</div>
     </div>
 
-    <!-- Форма регистрации (с кнопкой-плюсиком внутри, как в оригинале) -->
+    <!-- Форма регистрации -->
     <div class="overbox" ref="overbox">
       <div class="material-button alt-2" @click="toggleRegister" ref="materialButton">
         <span class="shape"></span>
@@ -71,11 +71,11 @@
       </div>
 
       <div class="input">
-        <label for="reregpass">Повторите пароль</label>
+        <label for="regusername">Имя пользователя</label>
         <input 
-          type="password" 
-          id="reregpass" 
-          v-model="registerForm.confirmPassword"
+          type="text" 
+          id="regusername" 
+          v-model="registerForm.userName"
           @focus="handleFocus($event)"
           @blur="handleBlur($event)"
         >
@@ -111,13 +111,14 @@ const loginForm = reactive({
   password: ''
 })
 
+// Форма регистрации
 const registerForm = reactive({
   login: '',
   password: '',
-  confirmPassword: ''
+  userName: ''
 })
 
-// Обработка фокуса для анимации лейблов (как в jQuery)
+// Обработка фокуса для анимации лейблов
 const handleFocus = (event) => {
   const input = event.target
   const parent = input.closest('.input')
@@ -160,7 +161,7 @@ const handleBlur = (event) => {
   }
 }
 
-// Переключение между формами (полная копия jQuery логики)
+// Переключение между формами
 const toggleRegister = (event) => {
   const btn = materialButton.value
   
@@ -286,7 +287,7 @@ const handleLogin = async (event) => {
       Password: loginForm.password
     })
     
-    const response = await fetch('https://wet-olives-judge.loca.lt/api/users/login', {
+    const response = await fetch('http://46.149.66.175/api/users/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -305,10 +306,9 @@ const handleLogin = async (event) => {
     // Подготавливаем данные для сохранения
     const authData = {
       ...data,
-      login: loginForm.login // Обязательно добавляем login из формы
+      login: loginForm.login
     }
     
-    // Если в ответе нет userId, но есть другие поля, пробуем их использовать
     if (!authData.userId && data.user) {
       authData.userId = data.user.id || data.user.userId
     }
@@ -326,54 +326,92 @@ const handleLogin = async (event) => {
   }
 }
 
-// Обработка регистрации
+// Обработка регистрации (с поддержкой статуса 204)
 const handleRegister = async (event) => {
   event.preventDefault()
 
-  if (!registerForm.login || !registerForm.password || !registerForm.confirmPassword) {
+  // Простая валидация
+  if (!registerForm.login || !registerForm.password || !registerForm.userName) {
     alert('Все поля обязательны')
     return
   }
 
-  if (registerForm.password !== registerForm.confirmPassword) {
-    alert('Пароли не совпадают')
-    return
-  }
-
   try {
-    const response = await fetch('https://wet-olives-judge.loca.lt/api/users/register', {
+    console.log('Отправка запроса на регистрацию:', {
+      Login: registerForm.login,
+      Password: registerForm.password,
+      userName: registerForm.userName
+    })
+    
+    const response = await fetch('http://46.149.66.175/api/users/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         Login: registerForm.login,
-        Password: registerForm.password
+        Password: registerForm.password,
+        userName: registerForm.userName
       })
     })
 
-    const data = await response.json()
-
-    if (!response.ok) {
-      throw new Error(data.message || 'Ошибка регистрации')
+    console.log('Статус ответа:', response.status)
+    
+    // Статус 204 No Content считается успешным
+    if (response.status === 204) {
+      console.log('Регистрация успешна (статус 204)')
+      alert('Регистрация успешна! Теперь войдите.')
+      
+      // Закрываем форму регистрации
+      const btn = materialButton.value
+      btn.click()
+      
+      // Очищаем форму
+      registerForm.login = ''
+      registerForm.password = ''
+      registerForm.userName = ''
+      return
     }
 
+    // Проверяем статус ответа для других кодов
+    if (!response.ok) {
+      // Пытаемся получить сообщение об ошибке
+      try {
+        const errorData = await response.json()
+        throw new Error(errorData.message || `Ошибка регистрации: ${response.status}`)
+      } catch {
+        throw new Error(`Ошибка регистрации: ${response.status}`)
+      }
+    }
+
+    // Проверяем, есть ли контент в ответе
+    const contentType = response.headers.get('content-type')
+    if (contentType && contentType.includes('application/json')) {
+      try {
+        const data = await response.json()
+        console.log('Ответ сервера:', data)
+      } catch (e) {
+        console.log('Пустой JSON ответ или неверный формат')
+      }
+    }
+
+    // Считаем регистрацию успешной при статусе 200 или 201
     alert('Регистрация успешна! Теперь войдите.')
     
-    // Имитируем нажатие на кнопку закрытия регистрации
+    // Закрываем форму регистрации
     const btn = materialButton.value
     btn.click()
     
     // Очищаем форму
     registerForm.login = ''
     registerForm.password = ''
-    registerForm.confirmPassword = ''
+    registerForm.userName = ''
   } catch (error) {
+    console.error('Ошибка регистрации:', error)
     alert(error.message)
   }
 }
 
 // Инициализация при монтировании
 onMounted(() => {
-  // Устанавливаем начальные стили для лейблов, если есть значения
   const inputs = document.querySelectorAll('.input input')
   inputs.forEach(input => {
     if (input.value) {

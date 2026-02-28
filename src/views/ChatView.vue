@@ -100,7 +100,7 @@ const fetchChats = async () => {
   try {
     console.log('Загрузка чатов для userId:', authStore.userId)
     
-    const response = await fetch('https://wet-olives-judge.loca.lt/api/chat/chats', {
+    const response = await fetch('http://46.149.66.175/api/chat/chats', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -110,6 +110,13 @@ const fetchChats = async () => {
         userId: authStore.userId
       })
     })
+
+    // Обработка статуса 204 - нет чатов
+    if (response.status === 204) {
+      console.log('Нет чатов (статус 204)')
+      chats.value = [] // Пустой массив чатов
+      return // Просто выходим, чатов нет
+    }
 
     if (!response.ok) {
       throw new Error(`Ошибка загрузки чатов: ${response.status}`)
@@ -166,7 +173,7 @@ const fetchChatHistory = async (chatId) => {
   try {
     setMessages([]);
 
-    const response = await fetch(`https://wet-olives-judge.loca.lt/api/messages/${chatId}`, {
+    const response = await fetch(`http://46.149.66.175/api/messages/${chatId}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${authStore.token}`,

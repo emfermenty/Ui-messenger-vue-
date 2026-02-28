@@ -53,7 +53,7 @@ const fetchUsers = async (search) => {
   }
   loading.value = true
   try {
-    const response = await fetch(`https://wet-olives-judge.loca.lt/api/users/${encodeURIComponent(search)}`, {
+    const response = await fetch(`http://46.149.66.175/api/users/${encodeURIComponent(search)}`, {
       headers: {
         'Authorization': `Bearer ${authStore.token}`
       }

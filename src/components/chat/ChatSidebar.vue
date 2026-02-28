@@ -18,14 +18,18 @@
     <div v-else-if="error" class="error-indicator">
       <i class="fas fa-exclamation-triangle"></i> {{ error }}
     </div>
+    <div v-else-if="chats.length === 0" class="empty-chats">
+      <i class="fas fa-users"></i>
+      <p>Найдите с кем хотите пообщаться</p>
+    </div>
     <div v-else class="chat-list">
-      <ChatListItem
-        v-for="chat in chats"
-        :key="chat.id"
-        :chat="chat"
-        :active="activeChat?.id === chat.id"
-        @select="$emit('select-chat', chat)"
-      />
+    <ChatListItem
+      v-for="chat in chats"
+      :key="chat.id"
+      :chat="chat"
+      :active="activeChat?.id === chat.id"
+      @select="$emit('select-chat', chat)"
+    />
     </div>
 
     <div class="sidebar-footer">
@@ -265,5 +269,27 @@ onUnmounted(() => {
     width: 100% !important;
     max-width: 320px;
   }
+}
+.empty-chats {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: #999;
+  text-align: center;
+  gap: 16px;
+}
+
+.empty-chats i {
+  font-size: 48px;
+  color: #ccc;
+}
+
+.empty-chats p {
+  font-size: 16px;
+  line-height: 1.5;
+  max-width: 200px;
 }
 </style>

@@ -81,7 +81,7 @@ export const useAuthStore = defineStore('auth', () => {
         console.log('Вызов logout API для пользователя:', login.value)
         
         try {
-          const response = await fetch('https://https://wet-olives-judge.loca.lt/api/users/logout', {
+          const response = await fetch('http://46.149.66.175/api/users/logout', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

@@ -1,3 +1,34 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Roboto', sans-serif;
+  text-decoration: none;
+  list-style-type: none;
+  outline: none;
+}
+
+body {
+  background-image: url('https://i.imgur.com/2iRGu14.jpeg');
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.version {
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  pointer-events: none;
+  z-index: 1000;
+}
+
 .box {
   position: relative;
   top: 0;
@@ -107,7 +138,7 @@
   border: 3px solid rgba(0, 0, 0, 0.1);
   font-weight: 900;
   font-size: 18px;
-  color: rgba(0, 0, 0, 0.4); /* ← светлый серый текст */
+  color: rgba(0, 0, 0, 0.4);
   cursor: pointer;
   position: relative;
   z-index: 2;
@@ -474,35 +505,228 @@ html {
   -ms-transform: translate(-50%, -50%);
 }
 
-.version {
-  position: fixed;
-  bottom: 16px;
-  left: 16px;
-  font-family: 'Roboto', sans-serif;
-  font-size: 12px;
-  color: rgba(0, 0, 0, 0.4); /* серый, полупрозрачный, но читаемый */
-  pointer-events: none; /* чтобы не мешал кликать */
-  z-index: 1000;
+/* Медиа-запросы для мобильных устройств */
+@media screen and (max-width: 768px) {
+  .materialContainer {
+    max-width: 90%;
+    max-height: 90vh;
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .box {
+    padding: 40px 25px 30px 25px;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+
+  .overbox {
+    padding: 30px 25px 100px 25px; /* Увеличен нижний отступ */
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+
+  .title {
+    font-size: 28px;
+    
+    &:before {
+      left: -25px;
+    }
+  }
+
+  .overbox .title {
+    width: 100%;
+    margin-bottom: 15px;
+  }
+
+  .material-button, .alt-2 {
+    width: 100px;
+    height: 100px;
+    top: 20px;
+    right: -20px;
+  }
+
+  .material-button.active, .alt-2.active {
+    width: 100%;
+    height: 100%;
+    top: 0;
+    right: 0;
+    transform: none;
+    border-radius: 10px;
+  }
+
+  .input {
+    margin-top: 15px;
+    height: 60px;
+  }
+
+  .input input {
+    font-size: 18px;
+    height: 50px;
+  }
+
+  .input label {
+    font-size: 18px;
+    line-height: 50px;
+  }
+
+  .button {
+    margin-top: 20px;
+    height: 60px;
+  }
+
+  .button button {
+    font-size: 18px;
+    line-height: 54px;
+  }
+
+  .button.login {
+    width: 80%;
+    left: 10%;
+  }
+
+  /* Стили для кнопки регистрации */
+  .overbox .button.register {
+    display: block !important;
+    margin-top: 25px;
+    margin-bottom: 30px;
+    position: relative;
+    bottom: auto;
+    width: 100%;
+    height: auto;
+  }
+
+  .overbox .button.register button {
+    background: #fff;
+    color: #ED2553;
+    border: 3px solid #fff;
+    font-weight: bold;
+    font-size: 18px;
+    height: 60px;
+    line-height: 54px;
+    position: relative;
+    z-index: 1000;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .overbox .button.register button:hover {
+    background: #ED2553;
+    color: #fff;
+    border-color: #ED2553;
+  }
 }
 
-* {
-  -webkit-box-sizing: border-box;
-  -moz-box-sizing: border-box;
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  text-decoration: none;
-  list-style-type: none;
-  outline: none;
+@media screen and (max-width: 480px) {
+  .materialContainer {
+    max-width: 95%;
+    max-height: 95vh;
+  }
 
-  &:after, &::before {
-    -webkit-box-sizing: border-box;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    text-decoration: none;
-    list-style-type: none;
-    outline: none;
+  .box {
+    padding: 30px 15px 25px 15px;
+  }
+
+  .overbox {
+    padding: 25px 15px 90px 15px; /* Увеличен нижний отступ */
+  }
+
+  .title {
+    font-size: 24px;
+    
+    &:before {
+      left: -15px;
+    }
+  }
+
+  .material-button, .alt-2 {
+    width: 70px;
+    height: 70px;
+    top: 15px;
+    right: -15px;
+  }
+
+  .material-button .shape:before, .alt-2 .shape:before {
+    width: 18px;
+    height: 3px;
+  }
+
+  .material-button .shape:after, .alt-2 .shape:after {
+    height: 18px;
+    width: 3px;
+  }
+
+  .input {
+    margin-top: 12px;
+    height: 50px;
+  }
+
+  .input input {
+    font-size: 16px;
+    height: 40px;
+    top: 8px;
+  }
+
+  .input label {
+    font-size: 16px;
+    line-height: 40px;
+    top: 8px;
+  }
+
+  .button {
+    margin-top: 15px;
+    height: 50px;
+  }
+
+  .button button {
+    font-size: 16px;
+    line-height: 44px;
+  }
+
+  .button.login {
+    width: 90%;
+    left: 5%;
+  }
+
+  /* Стили для кнопки регистрации на маленьких экранах */
+  .overbox .button.register {
+    margin-top: 20px;
+    margin-bottom: 25px;
+  }
+
+  .overbox .button.register button {
+    font-size: 16px;
+    height: 50px;
+    line-height: 44px;
+  }
+}
+
+/* Для очень маленьких экранов */
+@media screen and (max-width: 360px) {
+  .overbox {
+    padding: 20px 12px 80px 12px;
+  }
+  
+  .overbox .button.register {
+    margin-top: 15px;
+    margin-bottom: 20px;
+  }
+}
+
+/* Альбомная ориентация */
+@media screen and (max-height: 600px) and (orientation: landscape) {
+  .materialContainer {
+    max-height: 95vh;
+  }
+
+  .box, .overbox {
+    max-height: 90vh;
+    padding-top: 20px;
+    padding-bottom: 70px;
+  }
+
+  .overbox .button.register {
+    margin-top: 15px;
+    margin-bottom: 15px;
   }
 }
