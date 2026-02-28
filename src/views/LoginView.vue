@@ -286,7 +286,7 @@ const handleLogin = async (event) => {
       Password: loginForm.password
     })
     
-    const response = await fetch('http://localhost:5158/api/users/login', {
+    const response = await fetch('https://wet-olives-judge.loca.lt/api/users/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -341,7 +341,7 @@ const handleRegister = async (event) => {
   }
 
   try {
-    const response = await fetch('http://localhost:5158/api/users/register', {
+    const response = await fetch('https://wet-olives-judge.loca.lt/api/users/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

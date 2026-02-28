@@ -18,7 +18,7 @@ export function useWebSocket() {
       ws.value.close()
     }
 
-    const wsUrl = `ws://localhost:5158/ws?userId=${encodeURIComponent(authStore.userId)}`
+    const wsUrl = `ws://wet-olives-judge.loca.lt/ws?userId=${encodeURIComponent(authStore.userId)}`
     ws.value = new WebSocket(wsUrl)
 
     ws.value.onopen = () => {
