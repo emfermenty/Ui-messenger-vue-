@@ -7,6 +7,10 @@ export function useChat() {
   const messages = ref([])
   const typingTimeout = ref(null)
   const currentChatTyping = ref(false)
+  
+  // Состояние пагинации
+  const hasMoreBefore = ref(false)
+  const isLoadingMore = ref(false)
 
   const currentChatName = computed(() => {
     return activeChat.value?.name || 'Выберите чат'
@@ -16,12 +20,22 @@ export function useChat() {
     return activeChat.value?.online || false
   })
 
+  const currentChatLastSeen = computed(() => {
+    if (!activeChat.value) return null
+    const otherUser = activeChat.value.users?.find(u => u.id !== authStore.userId)
+    return otherUser?.lastSeenAt || activeChat.value.lastSeenAt
+  })
+
   const addMessage = (message) => {
     messages.value.push(message)
   }
 
   const setMessages = (newMessages) => {
     messages.value = newMessages
+  }
+
+  const prependMessages = (oldMessages) => {
+    messages.value = [...oldMessages, ...messages.value]
   }
 
   const setTyping = (isTyping) => {
@@ -36,11 +50,24 @@ export function useChat() {
 
   const selectChat = (chat) => {
     activeChat.value = chat
+    // Сбрасываем состояние пагинации при выборе нового чата
+    hasMoreBefore.value = false
+    isLoadingMore.value = false
   }
 
   const clearChat = () => {
     activeChat.value = null
     messages.value = []
+    hasMoreBefore.value = false
+    isLoadingMore.value = false
+  }
+
+  const setHasMoreBefore = (value) => {
+    hasMoreBefore.value = value
+  }
+
+  const setIsLoadingMore = (value) => {
+    isLoadingMore.value = value
   }
 
   return {
@@ -49,10 +76,16 @@ export function useChat() {
     currentChatTyping,
     currentChatName,
     currentChatOnline,
+    currentChatLastSeen,
+    hasMoreBefore,
+    isLoadingMore,
     addMessage,
     setMessages,
+    prependMessages,
     setTyping,
     selectChat,
-    clearChat
+    clearChat,
+    setHasMoreBefore,
+    setIsLoadingMore
   }
 }

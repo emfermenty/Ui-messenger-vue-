@@ -26,6 +26,13 @@
           <div class="result-name">{{ user.user_name || user.login }}</div>
           <div class="result-login">@{{ user.login }}</div>
         </div>
+        <div class="result-status">
+          <div class="status-dot" :class="{ online: user.isOnline }"></div>
+          <div v-if="user.isOnline" class="status-text online">в сети</div>
+          <div v-else-if="user.lastSeenAt" class="status-text">
+            {{ formatTimeAgoShort(user.lastSeenAt) }}
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -34,6 +41,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { useTimeAgo } from '@/composables/useTimeAgo'
 import debounce from 'lodash/debounce'
 
 const props = defineProps({
@@ -41,6 +49,7 @@ const props = defineProps({
 })
 
 const authStore = useAuthStore()
+const { formatTimeAgoShort } = useTimeAgo()
 const query = ref('')
 const results = ref([])
 const loading = ref(false)
@@ -53,7 +62,7 @@ const fetchUsers = async (search) => {
   }
   loading.value = true
   try {
-    const response = await fetch(`http://46.149.66.175/api/users/${encodeURIComponent(search)}`, {
+    const response = await fetch(`http://localhost:5158/api/users/${encodeURIComponent(search)}`, {
       headers: {
         'Authorization': `Bearer ${authStore.token}`
       }
@@ -178,5 +187,34 @@ const handleBlur = () => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.result-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ccc;
+}
+
+.status-dot.online {
+  background: #4CAF50;
+}
+
+.status-text {
+  font-size: 10px;
+  color: #999;
+  white-space: nowrap;
+}
+
+.status-text.online {
+  color: #4CAF50;
 }
 </style>

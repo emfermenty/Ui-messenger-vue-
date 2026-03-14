@@ -1,0 +1,268 @@
+/* Стили для аудиоплеера с высокой специфичностью */
+
+/* Основной контейнер аудиоплеера */
+.audio-player.audio-player.audio-player {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 12px !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-radius: 12px !important;
+  min-width: 280px !important;
+  max-width: 400px !important;
+  font-family: 'Roboto', sans-serif !important;
+}
+
+.audio-player.audio-player.voice-message {
+  background: rgba(76, 175, 80, 0.1) !important;
+  border-left: 3px solid #4CAF50 !important;
+}
+
+/* Кнопка воспроизведения */
+.audio-player.audio-player .play-btn.play-btn.play-btn {
+  width: 40px !important;
+  height: 40px !important;
+  border: none !important;
+  border-radius: 50% !important;
+  background: #ED2553 !important;
+  color: white !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s ease !important;
+  flex-shrink: 0 !important;
+  font-size: 14px !important;
+  box-shadow: 0 2px 8px rgba(237, 37, 83, 0.3) !important;
+  position: relative !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  outline: none !important;
+}
+
+.audio-player.audio-player .play-btn.play-btn i.fas {
+  font-size: 14px !important;
+  line-height: 1 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  color: white !important;
+  font-family: "Font Awesome 6 Free" !important;
+  font-weight: 900 !important;
+}
+
+.audio-player.audio-player .play-btn.play-btn .fa-play::before {
+  content: "\f04b" !important;
+  margin-left: 2px !important;
+}
+
+.audio-player.audio-player .play-btn.play-btn .fa-pause::before {
+  content: "\f04c" !important;
+}
+
+.audio-player.audio-player .play-btn.play-btn .fa-spinner::before {
+  content: "\f110" !important;
+  animation: fa-spin 2s infinite linear !important;
+}
+
+.audio-player.audio-player .play-btn.play-btn:hover:not(:disabled) {
+  background: #d01e48 !important;
+  transform: scale(1.05) !important;
+  box-shadow: 0 4px 12px rgba(237, 37, 83, 0.4) !important;
+}
+
+.audio-player.audio-player .play-btn.play-btn:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+}
+
+.audio-player.voice-message.voice-message .play-btn.play-btn {
+  background: #4CAF50 !important;
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3) !important;
+}
+
+.audio-player.voice-message.voice-message .play-btn.play-btn:hover:not(:disabled) {
+  background: #45a049 !important;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4) !important;
+}
+
+/* Информация об аудио */
+.audio-player.audio-player .audio-info {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+}
+
+.audio-player.audio-player .audio-controls {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+}
+
+.audio-player.audio-player .progress-container {
+  cursor: pointer !important;
+  padding: 4px 0 !important;
+}
+
+.audio-player.audio-player .progress-bar {
+  position: relative !important;
+  height: 4px !important;
+  background: rgba(255, 255, 255, 0.3) !important;
+  border-radius: 2px !important;
+  overflow: hidden !important;
+}
+
+.audio-player.audio-player .progress-fill {
+  height: 100% !important;
+  background: #ED2553 !important;
+  border-radius: 2px !important;
+  transition: width 0.1s ease !important;
+}
+
+.audio-player.voice-message .progress-fill {
+  background: #4CAF50 !important;
+}
+
+.audio-player.audio-player .progress-handle {
+  position: absolute !important;
+  top: 50% !important;
+  width: 12px !important;
+  height: 12px !important;
+  background: #ED2553 !important;
+  border: 2px solid white !important;
+  border-radius: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  transition: left 0.1s ease !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+}
+
+.audio-player.voice-message .progress-handle {
+  background: #4CAF50 !important;
+}
+
+.audio-player.audio-player .time-info {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  font-size: 12px !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  font-family: 'Courier New', monospace !important;
+  font-weight: 500 !important;
+  min-width: 70px !important;
+}
+
+.audio-player.audio-player .separator {
+  opacity: 0.6 !important;
+}
+
+.audio-player.audio-player .loading-duration {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.audio-player.audio-player .loading-duration i {
+  font-size: 10px !important;
+}
+
+.audio-player.audio-player .file-name {
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.audio-player.audio-player .voice-label {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-size: 12px !important;
+  color: #4CAF50 !important;
+  font-weight: 500 !important;
+}
+
+.audio-player.audio-player .voice-label i {
+  font-size: 10px !important;
+}
+
+/* Действия с аудио */
+.audio-player.audio-player .audio-actions {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  flex-shrink: 0 !important;
+}
+
+.audio-player.audio-player .download-btn,
+.audio-player.audio-player .speed-btn,
+.audio-player.audio-player .volume-btn {
+  width: 28px !important;
+  height: 28px !important;
+  border: none !important;
+  border-radius: 6px !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 11px !important;
+  transition: all 0.2s !important;
+}
+
+.audio-player.audio-player .download-btn:hover,
+.audio-player.audio-player .speed-btn:hover,
+.audio-player.audio-player .volume-btn:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+  color: white !important;
+}
+
+.audio-player.audio-player .speed-btn {
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  min-width: 28px !important;
+  text-align: center !important;
+}
+
+/* Адаптация для разных тем сообщений */
+.message.mine .audio-player.audio-player {
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+.message.theirs .audio-player.audio-player {
+  background: rgba(0, 0, 0, 0.05) !important;
+}
+
+.message.theirs .audio-player.audio-player .time-info,
+.message.theirs .audio-player.audio-player .file-name {
+  color: rgba(0, 0, 0, 0.7) !important;
+}
+
+.message.theirs .audio-player.audio-player .download-btn,
+.message.theirs .audio-player.audio-player .speed-btn,
+.message.theirs .audio-player.audio-player .volume-btn {
+  background: rgba(0, 0, 0, 0.1) !important;
+  color: rgba(0, 0, 0, 0.6) !important;
+}
+
+.message.theirs .audio-player.audio-player .download-btn:hover,
+.message.theirs .audio-player.audio-player .speed-btn:hover,
+.message.theirs .audio-player.audio-player .volume-btn:hover {
+  background: rgba(0, 0, 0, 0.2) !important;
+  color: rgba(0, 0, 0, 0.8) !important;
+}
+
+/* Анимация спиннера */
+@keyframes fa-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

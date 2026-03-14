@@ -287,7 +287,7 @@ const handleLogin = async (event) => {
       Password: loginForm.password
     })
     
-    const response = await fetch('http://46.149.66.175/api/users/login', {
+    const response = await fetch('http://localhost:5158/api/users/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -343,7 +343,7 @@ const handleRegister = async (event) => {
       userName: registerForm.userName
     })
     
-    const response = await fetch('http://46.149.66.175/api/users/register', {
+    const response = await fetch('http://localhost:5158/api/users/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

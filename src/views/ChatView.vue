@@ -23,12 +23,19 @@
         :name="currentChatName"
         :online="currentChatOnline"
         :typing="currentChatTyping"
+        :lastSeenAt="currentChatLastSeen"
+        :soundEnabled="soundEnabled"
         @open-settings="showUserPanel = true"
+        @toggle-sound="handleToggleSound"
       />
 
       <ChatMessages
         :messages="messages"
         :currentUserId="authStore.userId"
+        :hasMoreBefore="hasMoreBefore"
+        :isLoadingMore="isLoadingMore"
+        @open-image="handleOpenImage"
+        @load-more="loadMoreMessages"
       />
 
       <ChatInput
@@ -45,6 +52,14 @@
       @close="showUserPanel = false"
       @logout="logout"
     />
+
+    <!-- Модальное окно для просмотра изображений -->
+    <ImageViewer
+      :visible="imageViewer.visible"
+      :imageUrl="imageViewer.url"
+      :fileName="imageViewer.fileName"
+      @close="handleCloseImage"
+    />
   </div>
 </template>
 
@@ -55,12 +70,14 @@ import { useAuthStore } from '@/stores/auth'
 import { useWebSocket } from '@/composables/useWebSocket'
 import { useChat } from '@/composables/useChat'
 import { useInactivityTimer } from '@/composables/useInactivityTimer'
+import { useNotifications } from '@/composables/useNotifications'
 
 import ChatSidebar from '@/components/chat/ChatSidebar.vue'
 import ChatHeader from '@/components/chat/ChatHeader.vue'
 import ChatMessages from '@/components/chat/ChatMessages.vue'
 import ChatInput from '@/components/chat/ChatInput.vue'
 import UserPanel from '@/components/chat/UserPanel.vue'
+import ImageViewer from '@/components/common/ImageViewer.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -68,6 +85,14 @@ const authStore = useAuthStore()
 // Composables
 const chatManager = useChat()
 const { isConnected, connect, disconnect, send } = useWebSocket()
+const { 
+  initSound, 
+  sendNotification, 
+  requestNotificationPermission,
+  soundEnabled,
+  toggleSound,
+  playNotificationSound
+} = useNotifications()
 
 // Из chatManager
 const activeChat = chatManager.activeChat
@@ -75,10 +100,16 @@ const messages = chatManager.messages
 const currentChatTyping = chatManager.currentChatTyping
 const currentChatName = chatManager.currentChatName
 const currentChatOnline = chatManager.currentChatOnline
+const currentChatLastSeen = chatManager.currentChatLastSeen
+const hasMoreBefore = chatManager.hasMoreBefore
+const isLoadingMore = chatManager.isLoadingMore
 const addMessage = chatManager.addMessage
 const setMessages = chatManager.setMessages
+const prependMessages = chatManager.prependMessages
 const setTyping = chatManager.setTyping
 const selectChatMethod = chatManager.selectChat
+const setHasMoreBefore = chatManager.setHasMoreBefore
+const setIsLoadingMore = chatManager.setIsLoadingMore
 
 // Локальное состояние
 const showUserPanel = ref(false)
@@ -86,6 +117,13 @@ const sidebarWidth = ref(280)
 const chats = ref([])
 const isLoading = ref(true)
 const error = ref(null)
+
+// Модальное окно для просмотра изображений
+const imageViewer = ref({
+  visible: false,
+  url: '',
+  fileName: ''
+})
 
 // --- Загрузка списка чатов (POST /api/chat/chats с телом { userId }) ---
 const fetchChats = async () => {
@@ -100,7 +138,7 @@ const fetchChats = async () => {
   try {
     console.log('Загрузка чатов для userId:', authStore.userId)
     
-    const response = await fetch('http://46.149.66.175/api/chat/chats', {
+    const response = await fetch('http://localhost:5158/api/chat/chats', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -128,20 +166,22 @@ const fetchChats = async () => {
     chats.value = data.map(chat => {
       // Определяем имя чата
       let chatName = chat.chat_name
+      const otherUser = chat.users.find(u => u.id !== authStore.userId)
+      
       if (chat.type === 0 && !chatName) {
-        const otherUser = chat.users.find(u => u.id !== authStore.userId)
         chatName = otherUser?.user_name || otherUser?.login || 'Пользователь'
       }
 
       // ID собеседника для отправки сообщений
-      const otherUserId = chat.users.find(u => u.id !== authStore.userId)?.id || chat.users[0]?.id
+      const otherUserId = otherUser?.id || chat.users[0]?.id
 
       return {
         id: chat.id,
         name: chatName,
         lastMsg: 'Нет сообщений',
         time: '',
-        online: false,
+        online: otherUser?.isOnline || false,
+        lastSeenAt: otherUser?.lastSeenAt,
         userId: otherUserId,      // ID получателя (для отправки)
         type: chat.type,
         users: chat.users
@@ -173,7 +213,7 @@ const fetchChatHistory = async (chatId) => {
   try {
     setMessages([]);
 
-    const response = await fetch(`http://46.149.66.175/api/messages/${chatId}`, {
+    const response = await fetch(`http://localhost:5158/api/messages/${chatId}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${authStore.token}`,
@@ -205,19 +245,108 @@ const fetchChatHistory = async (chatId) => {
       } else if (msg.userId === currentUserId) {
         senderName = currentUserName;
       }
+      
+      // Отладка медиа
+      if (msg.mediaAttachments && msg.mediaAttachments.length > 0) {
+        console.log('Сообщение с медиа:', msg);
+        console.log('MediaAttachments:', msg.mediaAttachments);
+      }
+      
       return {
+        id: msg.id,
         text: msg.text,
         senderId: msg.userId,
         senderName: senderName,
         timestamp: msg.sentAt,
-        type: 'message'
+        type: 'message',
+        media: msg.mediaAttachments || []
       };
     });
 
     formattedMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
     setMessages(formattedMessages);
+    
+    // Сохраняем информацию о пагинации
+    setHasMoreBefore(data.hasMoreBefore || false);
+    setIsLoadingMore(false);
   } catch (err) {
     console.error('Ошибка загрузки истории сообщений:', err);
+    setIsLoadingMore(false);
+  }
+};
+
+// --- Загрузка старых сообщений (пагинация) ---
+const loadMoreMessages = async () => {
+  if (!activeChat.value?.id || chatManager.isLoadingMore.value || !chatManager.hasMoreBefore.value) {
+    return;
+  }
+
+  const currentMessages = messages.value;
+  if (currentMessages.length === 0) return;
+
+  // ID самого старого сообщения для пагинации
+  const oldestMessageId = currentMessages[0]?.id;
+  if (!oldestMessageId) return;
+
+  try {
+    chatManager.setIsLoadingMore(true);
+
+    const response = await fetch(`http://localhost:5158/api/messages/${activeChat.value.id}/before/${oldestMessageId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${authStore.token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Ошибка загрузки старых сообщений: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('Старые сообщения:', data);
+
+    const chatUsers = activeChat.value?.users || [];
+    const userMap = new Map();
+    chatUsers.forEach(u => {
+      const name = u.user_name || u.login || 'Пользователь';
+      userMap.set(u.id, name);
+    });
+
+    const currentUserId = authStore.userId;
+    const currentUserName = authStore.login || 'Вы';
+
+    const formattedOldMessages = data.messages.map(msg => {
+      let senderName = userMap.get(msg.userId);
+      if (!senderName) {
+        senderName = msg.userId === currentUserId ? currentUserName : 'Собеседник';
+      } else if (msg.userId === currentUserId) {
+        senderName = currentUserName;
+      }
+      
+      return {
+        id: msg.id,
+        text: msg.text,
+        senderId: msg.userId,
+        senderName: senderName,
+        timestamp: msg.sentAt,
+        type: 'message',
+        media: msg.mediaAttachments || []
+      };
+    });
+
+    // Сортируем старые сообщения по времени
+    formattedOldMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    
+    // Добавляем старые сообщения в начало списка
+    chatManager.prependMessages(formattedOldMessages);
+    
+    // Обновляем информацию о пагинации
+    chatManager.setHasMoreBefore(data.hasMoreBefore || false);
+  } catch (err) {
+    console.error('Ошибка загрузки старых сообщений:', err);
+  } finally {
+    setIsLoadingMore(false);
   }
 };
 
@@ -238,10 +367,11 @@ const handleUserSelect = (user) => {
     type: 0,
     lastMsg: '',
     time: '',
-    online: false,
+    online: user.isOnline || false,
+    lastSeenAt: user.lastSeenAt,
     users: [
       { id: authStore.userId, login: authStore.login, user_name: authStore.user_name },
-      { id: user.id, login: user.login, user_name: user.user_name }
+      { id: user.id, login: user.login, user_name: user.user_name, isOnline: user.isOnline, lastSeenAt: user.lastSeenAt }
     ]
   }
 
@@ -272,20 +402,87 @@ onMounted(() => {
 const handleWebSocketMessage = (data) => {
   console.log('Получено WebSocket сообщение:', data);
 
-  if (data.chatId && data.senderId && data.text) {
+  // Обработка статуса онлайн
+  if (data.type === 'user_online') {
+    updateUserOnlineStatus(data.userId, true);
+    return;
+  }
+
+  // Обработка статуса оффлайн
+  if (data.type === 'user_offline') {
+    updateUserOnlineStatus(data.userId, false, data.lastSeenAt);
+    return;
+  }
+
+  // Обработка обычных сообщений (только от других пользователей)
+  if (data.chatId && data.senderId && data.senderId !== authStore.userId && (data.text || data.mediaAttachments)) {
     const isForActiveChat = activeChat.value?.id === data.chatId;
+    const senderName = data.senderName || 'Собеседник'
+    const messageText = data.text || 'Отправил медиа-контент'
 
     if (isForActiveChat) {
-      addMessage({
+      console.log('Получено сообщение от другого пользователя:', data);
+      
+      const newMessage = {
+        id: data.id,
         text: data.text,
         senderId: data.senderId,
-        senderName: data.senderName || 'Собеседник',
+        senderName: senderName,
         timestamp: data.sentAt,
-        type: 'message'
-      });
+        type: 'message',
+        media: data.mediaAttachments || []
+      }
+      
+      addMessage(newMessage);
+      
+      // Отправляем уведомление для активного чата (только звук, без браузерного уведомления)
+      sendNotification(senderName, messageText, false);
+    } else {
+      // Для неактивных чатов отправляем полное уведомление (звук + браузерное)
+      sendNotification(senderName, messageText, true);
     }
 
-    updateChatLastMessage(data.chatId, data.text, data.sentAt);
+    // Определяем текст для отображения в списке чатов
+    let displayText = data.text
+    if (!displayText && data.mediaAttachments?.length > 0) {
+      const hasVoice = data.mediaAttachments.some(media => 
+        media.contentType?.includes('webm') || 
+        media.fileName?.startsWith('voice_')
+      )
+      displayText = hasVoice ? '🎤 Голосовое сообщение' : '📎 Медиа'
+    }
+
+    updateChatLastMessage(data.chatId, displayText, data.sentAt);
+  }
+};
+
+// --- Обновление онлайн статуса пользователя ---
+const updateUserOnlineStatus = (userId, isOnline, lastSeenAt = null) => {
+  console.log(`Обновление статуса пользователя ${userId}: ${isOnline ? 'онлайн' : 'оффлайн'}`);
+  
+  // Обновляем статус во всех чатах, где есть этот пользователь
+  chats.value.forEach(chat => {
+    const user = chat.users?.find(u => u.id === userId);
+    if (user) {
+      user.isOnline = isOnline;
+      if (lastSeenAt) {
+        user.lastSeenAt = lastSeenAt;
+      }
+      
+      // Если это личный чат с этим пользователем, обновляем статус чата
+      if (chat.type === 0 && chat.userId === userId) {
+        chat.online = isOnline;
+        chat.lastSeenAt = lastSeenAt;
+      }
+    }
+  });
+
+  // Обновляем активный чат, если это нужный пользователь
+  if (activeChat.value?.userId === userId) {
+    const updatedChat = chats.value.find(c => c.id === activeChat.value.id);
+    if (updatedChat) {
+      selectChatMethod(updatedChat);
+    }
   }
 };
 
@@ -295,6 +492,11 @@ onMounted(async () => {
     router.push('/login')
     return
   }
+  
+  // Инициализируем звук и запрашиваем разрешения
+  initSound()
+  await requestNotificationPermission()
+  
   await fetchChats()
   connect(handleWebSocketMessage)
 })
@@ -310,29 +512,46 @@ useInactivityTimer(30 * 60 * 1000, async () => {
 })
 
 // --- Отправка сообщения ---
-const sendMessage = (text) => {
+const sendMessage = (messageData) => {
   if (!activeChat.value || !isConnected.value) return
 
-  const messageData = {
+  const wsMessage = {
     Type: 'send_private_message',
     Data: {
       RecipientId: activeChat.value.userId,
-      Text: text
+      Text: messageData.text,
+      MediaIds: messageData.mediaIds
     }
   }
 
-  console.log('Отправка сообщения:', messageData)
+  console.log('Отправка сообщения:', wsMessage)
 
-  if (send(messageData)) {
-    addMessage({
-      text: text,
+  if (send(wsMessage)) {
+    // Добавляем сообщение в локальный чат с реальными медиа-данными
+    const localMessage = {
+      id: `local-${Date.now()}-${Math.random()}`,
+      text: messageData.text,
       senderId: authStore.userId,
       senderName: authStore.login,
       timestamp: new Date().toISOString(),
-      type: 'message'
-    })
+      type: 'message',
+      media: messageData.uploadedFiles || []
+    }
 
-    updateChatLastMessage(activeChat.value.id, text, new Date().toISOString())
+    console.log('Добавляем локальное сообщение с медиа:', localMessage)
+    addMessage(localMessage)
+
+    // Обновляем последнее сообщение в списке чатов
+    let displayText = messageData.text
+    if (!displayText && messageData.mediaIds?.length > 0) {
+      // Проверяем, есть ли голосовые сообщения среди загруженных файлов
+      const hasVoice = messageData.uploadedFiles?.some(file => 
+        file.contentType?.includes('webm') || 
+        file.fileName?.startsWith('voice_')
+      )
+      displayText = hasVoice ? '🎤 Голосовое сообщение' : '📎 Медиа'
+    }
+    updateChatLastMessage(activeChat.value.id, displayText, new Date().toISOString())
 
     // Если это временный чат, через 1.5 секунды обновляем список, чтобы получить настоящий ID
     if (activeChat.value.id?.startsWith('temp-')) {
@@ -371,6 +590,31 @@ const logout = async () => {
   if (confirm('Вы уверены, что хотите выйти?')) {
     disconnect()
     await authStore.logout()
+  }
+}
+
+// --- Модальное окно для изображений ---
+const handleOpenImage = (imageData) => {
+  imageViewer.value = {
+    visible: true,
+    url: imageData.url,
+    fileName: imageData.fileName
+  }
+}
+
+const handleCloseImage = () => {
+  imageViewer.value.visible = false
+}
+
+// --- Управление звуком ---
+const handleToggleSound = () => {
+  const newState = toggleSound()
+  
+  // Если звук включили, проигрываем тестовый звук
+  if (newState) {
+    setTimeout(() => {
+      playNotificationSound()
+    }, 100)
   }
 }
 </script>

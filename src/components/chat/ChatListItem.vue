@@ -7,18 +7,28 @@
       <div class="name">{{ chat.name }}</div>
       <div class="last-msg">{{ chat.lastMsg }}</div>
     </div>
-    <div class="time">{{ chat.time }}</div>
+    <div class="meta">
+      <div class="time">{{ chat.time }}</div>
+      <div v-if="!chat.online && chat.lastSeenAt" class="last-seen">
+        {{ formatTimeAgoShort(chat.lastSeenAt) }}
+      </div>
+      <div v-else-if="chat.online" class="online-text">в сети</div>
+    </div>
     <div class="status" :class="{ online: chat.online }"></div>
   </div>
 </template>
 
 <script setup>
+import { useTimeAgo } from '@/composables/useTimeAgo'
+
 defineProps({
   chat: Object,
   active: Boolean
 })
 
 defineEmits(['select'])
+
+const { formatTimeAgoShort } = useTimeAgo()
 </script>
 
 <style scoped>
@@ -91,6 +101,26 @@ defineEmits(['select'])
   color: #999;
   white-space: nowrap;
   flex-shrink: 0;
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.last-seen {
+  font-size: 10px;
+  color: #bbb;
+  white-space: nowrap;
+}
+
+.online-text {
+  font-size: 10px;
+  color: #4CAF50;
+  white-space: nowrap;
 }
 
 .status {
