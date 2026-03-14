@@ -66,6 +66,7 @@
         @click="handleStartRecording" 
         class="voice-btn"
         :disabled="!canRecord"
+        title="Записать голосовое сообщение"
       >
         <i class="fas fa-microphone"></i>
       </button>
@@ -154,9 +155,23 @@ const canSend = computed(() =>
   !props.disabled && !uploading.value && (message.value.trim() || selectedFiles.value.length > 0)
 )
 
-const canRecord = computed(() => 
-  !props.disabled && !uploading.value && isVoiceSupported() && !selectedFiles.value.length && !message.value.trim()
-)
+const canRecord = computed(() => {
+  const conditions = {
+    notDisabled: !props.disabled,
+    notUploading: !uploading.value,
+    voiceSupported: isVoiceSupported(),
+    noFiles: !selectedFiles.value.length,
+    noText: !message.value.trim()
+  }
+  
+  console.log('canRecord conditions:', conditions)
+  console.log('isVoiceSupported result:', isVoiceSupported())
+  console.log('MediaRecorder available:', !!window.MediaRecorder)
+  console.log('getUserMedia available:', !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia))
+  console.log('HTTPS:', location.protocol === 'https:')
+  
+  return conditions.notDisabled && conditions.notUploading && conditions.voiceSupported && conditions.noFiles && conditions.noText
+})
 
 const openFileDialog = () => {
   fileInput.value?.click()
@@ -294,6 +309,23 @@ const handleStopRecording = async () => {
 
 const handleCancelRecording = () => {
   cancelRecording()
+}
+
+// Показ ошибки для неподдерживаемых браузеров
+const showVoiceError = () => {
+  let errorMessage = 'Голосовые сообщения недоступны.\n\n'
+  
+  if (!window.MediaRecorder) {
+    errorMessage += 'Ваш браузер не поддерживает запись аудио.'
+  } else if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) {
+    errorMessage += 'Нет доступа к микрофону.'
+  } else if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+    errorMessage += 'Для записи голосовых сообщений требуется HTTPS соединение.'
+  } else {
+    errorMessage += 'Проверьте разрешения браузера на доступ к микрофону.'
+  }
+  
+  alert(errorMessage)
 }
 
 // Получение иконки для файла (включая голосовые сообщения)
@@ -542,6 +574,15 @@ const getFileName = (file) => {
 .voice-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.voice-btn.disabled {
+  background: #999;
+  cursor: pointer;
+}
+
+.voice-btn.disabled:hover {
+  background: #777;
 }
 
 .cancel-btn {

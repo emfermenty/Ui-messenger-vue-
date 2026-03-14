@@ -10,7 +10,25 @@ export function useVoiceRecording() {
 
   // Проверка поддержки браузером
   const isSupported = () => {
-    return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder)
+    // Базовая проверка API
+    const hasMediaRecorder = !!(window.MediaRecorder)
+    const hasGetUserMedia = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)
+    
+    // Проверка HTTPS (требуется для большинства браузеров)
+    const isSecure = location.protocol === 'https:' || 
+                     location.hostname === 'localhost' || 
+                     location.hostname === '127.0.0.1' ||
+                     location.hostname.endsWith('.localhost')
+    
+    console.log('Voice recording support check:', {
+      hasMediaRecorder,
+      hasGetUserMedia,
+      isSecure,
+      protocol: location.protocol,
+      hostname: location.hostname
+    })
+    
+    return hasMediaRecorder && hasGetUserMedia && isSecure
   }
 
   // Запуск записи

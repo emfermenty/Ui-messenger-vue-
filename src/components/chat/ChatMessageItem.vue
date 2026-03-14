@@ -94,7 +94,7 @@ const getMediaUrl = (url) => {
   // Если URL уже полный, возвращаем как есть
   if (url.startsWith('http')) return url
   // Иначе добавляем базовый URL
-  return `http://46.149.66.175${url}`
+  return `https://46.149.66.175${url}`
 }
 
 const openMediaViewer = (media) => {
