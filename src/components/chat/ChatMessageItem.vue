@@ -94,7 +94,7 @@ const getMediaUrl = (url) => {
   // Если URL уже полный, возвращаем как есть
   if (url.startsWith('http')) return url
   // Иначе добавляем базовый URL
-  return `http://localhost:5158${url}`
+  return `http://46.149.66.175${url}`
 }
 
 const openMediaViewer = (media) => {
@@ -248,6 +248,45 @@ const isVoiceMessage = (media) => {
 .media-video {
   max-width: 300px;
   border-radius: 8px;
+}
+
+.media-audio {
+  width: 250px;
+}
+
+.voice-message {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  min-width: 200px;
+}
+
+.message.mine .voice-message {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.message.theirs .voice-message {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.voice-audio {
+  width: 100%;
+  height: 32px;
+}
+
+.voice-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.voice-info i {
+  color: #4CAF50;
 }
 
 .media-file {

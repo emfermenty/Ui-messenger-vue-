@@ -20,7 +20,7 @@ export function useMediaUpload() {
         formData.append('files', file)
       })
 
-      const response = await fetch('http://localhost:5158/api/Media/upload', {
+      const response = await fetch('http://46.149.66.175/api/Media/upload', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authStore.token}`

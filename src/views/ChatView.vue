@@ -138,7 +138,7 @@ const fetchChats = async () => {
   try {
     console.log('Загрузка чатов для userId:', authStore.userId)
     
-    const response = await fetch('http://localhost:5158/api/chat/chats', {
+    const response = await fetch('http://46.149.66.175/api/chat/chats', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -213,7 +213,7 @@ const fetchChatHistory = async (chatId) => {
   try {
     setMessages([]);
 
-    const response = await fetch(`http://localhost:5158/api/messages/${chatId}`, {
+    const response = await fetch(`http://46.149.66.175/api/messages/${chatId}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${authStore.token}`,
@@ -291,7 +291,7 @@ const loadMoreMessages = async () => {
   try {
     chatManager.setIsLoadingMore(true);
 
-    const response = await fetch(`http://localhost:5158/api/messages/${activeChat.value.id}/before/${oldestMessageId}`, {
+    const response = await fetch(`http://46.149.66.175/api/messages/${activeChat.value.id}/before/${oldestMessageId}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${authStore.token}`,
