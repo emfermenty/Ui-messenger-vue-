@@ -645,4 +645,141 @@ const getFileName = (file) => {
   50% { opacity: 0.5; }
   100% { opacity: 1; }
 }
+
+/* Мобильные стили */
+@media (max-width: 768px) {
+  .message-input-container {
+    padding: 0;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    background: white;
+    border-top: 1px solid #eee;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  .message-input {
+    padding: 12px;
+    gap: 8px;
+    flex-wrap: nowrap;
+    align-items: center;
+    min-height: 60px;
+  }
+
+  /* Стили для обычного состояния */
+  .message-input input {
+    height: 40px;
+    font-size: 16px;
+    border-radius: 20px;
+    padding: 0 12px;
+  }
+
+  .attach-btn,
+  .send-btn,
+  .voice-btn {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+  }
+
+  /* Стили для состояния записи голоса */
+  .message-input .cancel-btn {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+  }
+
+  .message-input .stop-btn {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+  }
+
+  .message-input .recording-info {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 10px;
+    font-size: 13px;
+    border-radius: 18px;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  /* Обеспечиваем, что все элементы помещаются в одну строку */
+  .message-input {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    overflow: hidden;
+  }
+
+  /* Превью медиа на мобильном */
+  .media-preview {
+    padding: 8px 12px 0;
+    max-height: 150px;
+  }
+
+  .media-item {
+    min-width: 150px;
+  }
+
+  .upload-progress {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  /* Drag overlay на мобильном */
+  .drag-content {
+    gap: 8px;
+  }
+
+  .drag-content i {
+    font-size: 32px;
+  }
+
+  .drag-content span {
+    font-size: 14px;
+  }
+}
+
+/* Для очень маленьких экранов */
+@media (max-width: 480px) {
+  .message-input {
+    padding: 10px;
+    gap: 6px;
+  }
+
+  .attach-btn,
+  .send-btn,
+  .voice-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .message-input .cancel-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .message-input .stop-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .message-input input {
+    height: 36px;
+    font-size: 15px;
+    padding: 0 10px;
+  }
+
+  .recording-info {
+    font-size: 12px !important;
+    padding: 6px 8px !important;
+  }
+}
 </style>

@@ -1,6 +1,22 @@
 <template>
-  <div class="chat-container">
+  <div class="chat-container" :class="{ 'mobile': isMobile, 'chat-open': isMobile && activeChat }">
+    <!-- Мобильная навигация -->
+    <div v-if="isMobile && activeChat" class="mobile-header">
+      <button @click="closeMobileChat" class="back-btn">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <div class="mobile-chat-info">
+        <h3>{{ currentChatName }}</h3>
+        <span v-if="currentChatOnline" class="online-status">в сети</span>
+        <span v-else-if="currentChatLastSeen" class="last-seen">{{ formatLastSeen(currentChatLastSeen) }}</span>
+      </div>
+      <button @click="showUserPanel = true" class="settings-btn">
+        <i class="fas fa-cog"></i>
+      </button>
+    </div>
+
     <ChatSidebar
+      v-show="!isMobile || !activeChat"
       :chats="chats"
       :activeChat="activeChat"
       :isConnected="isConnected"
@@ -10,16 +26,19 @@
       @logout="logout"
       @resize="handleSidebarResize"
       @select-user="handleUserSelect"
+      :class="{ 'mobile-sidebar': isMobile }"
     />
 
     <div 
+      v-show="!isMobile || activeChat"
       class="chat-main" 
-      :style="{ 
+      :style="!isMobile ? { 
         marginLeft: sidebarWidth + 'px',
         width: `calc(100% - ${sidebarWidth}px)`
-      }"
+      } : {}"
     >
       <ChatHeader
+        v-if="!isMobile"
         :name="currentChatName"
         :online="currentChatOnline"
         :typing="currentChatTyping"
@@ -29,20 +48,28 @@
         @toggle-sound="handleToggleSound"
       />
 
-      <ChatMessages
-        :messages="messages"
-        :currentUserId="authStore.userId"
-        :hasMoreBefore="hasMoreBefore"
-        :isLoadingMore="isLoadingMore"
-        @open-image="handleOpenImage"
-        @load-more="loadMoreMessages"
-      />
+      <div v-if="!activeChat && !isMobile" class="no-chat-selected">
+        <i class="fas fa-comments"></i>
+        <h3>Выберите чат</h3>
+        <p>Выберите чат из списка слева или найдите пользователя для начала общения</p>
+      </div>
 
-      <ChatInput
-        :disabled="!activeChat || !isConnected"
-        @send="sendMessage"
-        @typing="handleTyping"
-      />
+      <template v-else-if="activeChat">
+        <ChatMessages
+          :messages="messages"
+          :currentUserId="authStore.userId"
+          :hasMoreBefore="hasMoreBefore"
+          :isLoadingMore="isLoadingMore"
+          @open-image="handleOpenImage"
+          @load-more="loadMoreMessages"
+        />
+
+        <ChatInput
+          :disabled="!activeChat || !isConnected"
+          @send="sendMessage"
+          @typing="handleTyping"
+        />
+      </template>
     </div>
 
     <UserPanel
@@ -117,6 +144,46 @@ const sidebarWidth = ref(280)
 const chats = ref([])
 const isLoading = ref(true)
 const error = ref(null)
+
+// Мобильная адаптация
+const isMobile = ref(false)
+
+// Проверка размера экрана
+const checkMobile = () => {
+  const wasMobile = isMobile.value
+  isMobile.value = window.innerWidth <= 768
+  console.log('checkMobile:', { 
+    windowWidth: window.innerWidth, 
+    isMobile: isMobile.value, 
+    wasMobile,
+    activeChat: !!activeChat.value 
+  })
+}
+
+// Закрытие чата на мобильном
+const closeMobileChat = () => {
+  selectChatMethod(null)
+}
+
+// Форматирование времени последнего посещения
+const formatLastSeen = (lastSeenAt) => {
+  if (!lastSeenAt) return ''
+  const date = new Date(lastSeenAt)
+  const now = new Date()
+  const diffMs = now - date
+  const diffMins = Math.floor(diffMs / (1000 * 60))
+  
+  if (diffMins < 1) return 'только что'
+  if (diffMins < 60) return `${diffMins} мин назад`
+  
+  const diffHours = Math.floor(diffMins / 60)
+  if (diffHours < 24) return `${diffHours} ч назад`
+  
+  const diffDays = Math.floor(diffHours / 24)
+  if (diffDays < 7) return `${diffDays} д назад`
+  
+  return date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' })
+}
 
 // Модальное окно для просмотра изображений
 const imageViewer = ref({
@@ -385,6 +452,11 @@ const handleUserSelect = (user) => {
 const handleSelectChat = (chat) => {
   selectChatMethod(chat)
   fetchChatHistory(chat.id)
+  
+  // На мобильном автоматически скрываем сайдбар при выборе чата
+  if (isMobile.value) {
+    // Чат откроется автоматически благодаря v-show="!isMobile || activeChat"
+  }
 }
 
 // --- Обработка изменения ширины сайдбара ---
@@ -493,6 +565,10 @@ onMounted(async () => {
     return
   }
   
+  // Проверяем мобильное устройство
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+  
   // Инициализируем звук и запрашиваем разрешения
   initSound()
   await requestNotificationPermission()
@@ -503,6 +579,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   disconnect()
+  window.removeEventListener('resize', checkMobile)
 })
 
 // --- Таймер неактивности ---
@@ -637,5 +714,188 @@ const handleToggleSound = () => {
   right: 0;
   top: 0;
   bottom: 0;
+}
+
+.no-chat-selected {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: #999;
+  text-align: center;
+  gap: 16px;
+}
+
+.no-chat-selected i {
+  font-size: 64px;
+  color: #ddd;
+}
+
+.no-chat-selected h3 {
+  font-size: 24px;
+  margin: 0;
+  color: #666;
+}
+
+.no-chat-selected p {
+  font-size: 16px;
+  line-height: 1.5;
+  max-width: 400px;
+  margin: 0;
+}
+
+/* Мобильные стили */
+@media (max-width: 768px) {
+  .chat-container.mobile {
+    flex-direction: column;
+  }
+  
+  .mobile-sidebar {
+    position: fixed !important;
+    width: 100% !important;
+    max-width: none !important;
+    z-index: 1000;
+  }
+  
+  .chat-container.mobile.chat-open .mobile-sidebar {
+    display: none;
+  }
+  
+  .chat-container.mobile .chat-main {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin-left: 0 !important;
+    width: 100% !important;
+    height: 100vh !important;
+    display: flex;
+    flex-direction: column;
+  }
+  
+/* Мобильный хедер - базовые стили */
+.mobile-header {
+  display: none;
+  align-items: center;
+  padding: 12px 16px;
+  background: #ED2553;
+  color: white;
+  gap: 12px;
+  min-height: 60px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 100;
+}
+
+.back-btn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.back-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.mobile-chat-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.mobile-chat-info h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.online-status {
+  font-size: 12px;
+  color: #4CAF50;
+  font-weight: 500;
+}
+
+.last-seen {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.settings-btn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.settings-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+  
+  /* Показываем мобильный хедер */
+  .chat-container.mobile .mobile-header {
+    display: flex !important;
+  }
+  
+  /* Скрываем десктопный хедер на мобильном */
+  .chat-container.mobile .chat-main > .chat-header {
+    display: none;
+  }
+  
+  /* Обеспечиваем правильную структуру чата на мобильном */
+  .chat-container.mobile .chat-main .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 80px; /* Добавляем отступ снизу для поля ввода */
+  }
+  
+  .chat-container.mobile .chat-main .message-input-container {
+    flex-shrink: 0;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+  }
+}
+
+/* Десктопные стили */
+@media (min-width: 769px) {
+  .mobile-header {
+    display: none;
+  }
+  
+  .no-chat-selected {
+    display: flex;
+  }
+  
+  .chat-main {
+    position: absolute !important;
+    right: 0;
+    top: 0;
+    bottom: 0;
+  }
 }
 </style>

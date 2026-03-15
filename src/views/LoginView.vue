@@ -12,6 +12,8 @@
           v-model="loginForm.login"
           @focus="handleFocus($event)"
           @blur="handleBlur($event)"
+          autocomplete="username"
+          :disabled="isLoggingIn"
         >
         <span class="spin"></span>
       </div>
@@ -24,13 +26,16 @@
           v-model="loginForm.password"
           @focus="handleFocus($event)"
           @blur="handleBlur($event)"
+          @keyup.enter="handleLogin"
+          autocomplete="current-password"
+          :disabled="isLoggingIn"
         >
         <span class="spin"></span>
       </div>
 
       <div class="button login">
-        <button @click="handleLogin" :class="{ active: isLoggingIn }">
-          <span>Войти</span>
+        <button @click="handleLogin" :class="{ active: isLoggingIn }" :disabled="isLoggingIn">
+          <span>{{ isLoggingIn ? 'Вход...' : 'Войти' }}</span>
           <i class="fa fa-check"></i>
         </button>
       </div>
@@ -54,6 +59,8 @@
           v-model="registerForm.login"
           @focus="handleFocus($event)"
           @blur="handleBlur($event)"
+          autocomplete="username"
+          :disabled="isRegistering"
         >
         <span class="spin"></span>
       </div>
@@ -66,6 +73,8 @@
           v-model="registerForm.password"
           @focus="handleFocus($event)"
           @blur="handleBlur($event)"
+          autocomplete="new-password"
+          :disabled="isRegistering"
         >
         <span class="spin"></span>
       </div>
@@ -78,13 +87,20 @@
           v-model="registerForm.userName"
           @focus="handleFocus($event)"
           @blur="handleBlur($event)"
+          @keyup.enter="handleRegister"
+          autocomplete="name"
+          :disabled="isRegistering"
         >
         <span class="spin"></span>
       </div>
 
       <div class="button register">
-        <button @click="handleRegister">Регистрация</button>
+        <button @click="handleRegister" :disabled="isRegistering">
+          {{ isRegistering ? 'Регистрация...' : 'Регистрация' }}
+        </button>
       </div>
+
+      <div v-if="registerError" class="error-message">{{ registerError }}</div>
     </div>
     
     <div class="version">Версия: 1.0.0</div>
@@ -100,23 +116,26 @@ const router = useRouter()
 const authStore = useAuthStore()
 
 // Состояние
-const showRegister = ref(false)
 const isLoggingIn = ref(false)
+const isRegistering = ref(false)
 const loginError = ref('')
-const overbox = ref(null)
-const materialButton = ref(null)
+const registerError = ref('')
+const showRegister = ref(false)
 
 const loginForm = reactive({
   login: '',
   password: ''
 })
 
-// Форма регистрации
 const registerForm = reactive({
   login: '',
   password: '',
   userName: ''
 })
+
+// Refs для элементов
+const overbox = ref(null)
+const materialButton = ref(null)
 
 // Обработка фокуса для анимации лейблов
 const handleFocus = (event) => {
@@ -162,80 +181,100 @@ const handleBlur = (event) => {
 }
 
 // Переключение между формами
-const toggleRegister = (event) => {
-  const btn = materialButton.value
+const toggleRegister = () => {
+  showRegister.value = !showRegister.value
   
-  if (!btn.classList.contains('material-button')) {
-    // Закрываем регистрацию
-    document.querySelector('.shape').style.width = '100%'
-    document.querySelector('.shape').style.height = '100%'
-    document.querySelector('.shape').style.transform = 'rotate(0deg)'
-
-    setTimeout(() => {
-      if (overbox.value) {
-        overbox.value.style.overflow = 'initial'
-      }
-    }, 600)
-
-    // Анимация кнопки
-    btn.style.width = '140px'
-    btn.style.height = '140px'
-    
-    setTimeout(() => {
-      document.querySelector('.box').classList.remove('back')
-      btn.classList.remove('active')
-    }, 500)
-
-    // Скрываем элементы регистрации
-    const titles = overbox.value.querySelectorAll('.title')
-    const inputs = overbox.value.querySelectorAll('.input')
-    const buttons = overbox.value.querySelectorAll('.button')
-    
-    titles.forEach(el => el.style.display = 'none')
-    inputs.forEach(el => el.style.display = 'none')
-    buttons.forEach(el => el.style.display = 'none')
-
-    btn.classList.add('material-buton')
-    showRegister.value = false
-  } else {
-    // Открываем регистрацию
-    setTimeout(() => {
-      if (overbox.value) {
-        overbox.value.style.overflow = 'hidden'
-      }
-      document.querySelector('.box').classList.add('back')
-    }, 200)
-
-    btn.classList.add('active')
-    btn.style.width = '700px'
-    btn.style.height = '700px'
-
-    setTimeout(() => {
-      document.querySelector('.shape').style.width = '50%'
-      document.querySelector('.shape').style.height = '50%'
-      document.querySelector('.shape').style.transform = 'rotate(45deg)'
-
-      // Показываем элементы регистрации
-      const titles = overbox.value.querySelectorAll('.title')
-      const inputs = overbox.value.querySelectorAll('.input')
-      const buttons = overbox.value.querySelectorAll('.button')
+  if (showRegister.value) {
+    // Показываем форму регистрации
+    if (overbox.value) {
+      overbox.value.style.transform = 'rotateY(0deg)'
+      overbox.value.style.zIndex = '5'
       
-      titles.forEach(el => el.style.display = 'block')
-      inputs.forEach(el => el.style.display = 'block')
-      buttons.forEach(el => el.style.display = 'block')
-    }, 700)
-
-    btn.classList.remove('material-button')
-    showRegister.value = true
-  }
-
-  if (document.querySelector('.alt-2').classList.contains('material-buton')) {
-    document.querySelector('.alt-2').classList.remove('material-buton')
-    document.querySelector('.alt-2').classList.add('material-button')
+      // Показываем поля регистрации
+      const elements = overbox.value.querySelectorAll('.title, .button, .input')
+      elements.forEach(el => {
+        el.style.display = 'block'
+      })
+    }
+    
+    if (materialButton.value) {
+      materialButton.value.classList.add('active')
+    }
+  } else {
+    // Скрываем форму регистрации
+    if (overbox.value) {
+      overbox.value.style.transform = 'rotateY(180deg)'
+      overbox.value.style.zIndex = '1'
+      
+      // Скрываем поля регистрации
+      const elements = overbox.value.querySelectorAll('.title, .button, .input')
+      elements.forEach(el => {
+        el.style.display = 'none'
+      })
+    }
+    
+    if (materialButton.value) {
+      materialButton.value.classList.remove('active')
+    }
   }
 }
 
-// Обработка входа
+// Обработка регистрации
+const handleRegister = async (event) => {
+  event.preventDefault()
+  
+  if (!registerForm.login || !registerForm.password || !registerForm.userName) {
+    registerError.value = 'Заполните все поля'
+    return
+  }
+
+  isRegistering.value = true
+  registerError.value = ''
+
+  try {
+    console.log('Отправка запроса на регистрацию:', {
+      Login: registerForm.login,
+      Password: registerForm.password,
+      UserName: registerForm.userName
+    })
+    
+    const response = await fetch('https://46.149.66.175/api/users/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        Login: registerForm.login,
+        Password: registerForm.password,
+        UserName: registerForm.userName
+      })
+    })
+
+    const data = await response.json()
+    console.log('Ответ сервера на регистрацию:', data)
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Ошибка регистрации')
+    }
+
+    // После успешной регистрации переключаемся на форму входа
+    registerForm.login = ''
+    registerForm.password = ''
+    registerForm.userName = ''
+    
+    // Копируем данные в форму входа для удобства
+    loginForm.login = registerForm.login
+    
+    toggleRegister()
+    
+    // Показываем сообщение об успехе
+    loginError.value = 'Регистрация успешна! Теперь войдите в систему.'
+    
+  } catch (error) {
+    console.error('Ошибка регистрации:', error)
+    registerError.value = error.message
+  } finally {
+    isRegistering.value = false
+  }
+}
 const handleLogin = async (event) => {
   event.preventDefault()
   
@@ -326,90 +365,6 @@ const handleLogin = async (event) => {
   }
 }
 
-// Обработка регистрации (с поддержкой статуса 204)
-const handleRegister = async (event) => {
-  event.preventDefault()
-
-  // Простая валидация
-  if (!registerForm.login || !registerForm.password || !registerForm.userName) {
-    alert('Все поля обязательны')
-    return
-  }
-
-  try {
-    console.log('Отправка запроса на регистрацию:', {
-      Login: registerForm.login,
-      Password: registerForm.password,
-      userName: registerForm.userName
-    })
-    
-    const response = await fetch('https://46.149.66.175/api/users/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        Login: registerForm.login,
-        Password: registerForm.password,
-        userName: registerForm.userName
-      })
-    })
-
-    console.log('Статус ответа:', response.status)
-    
-    // Статус 204 No Content считается успешным
-    if (response.status === 204) {
-      console.log('Регистрация успешна (статус 204)')
-      alert('Регистрация успешна! Теперь войдите.')
-      
-      // Закрываем форму регистрации
-      const btn = materialButton.value
-      btn.click()
-      
-      // Очищаем форму
-      registerForm.login = ''
-      registerForm.password = ''
-      registerForm.userName = ''
-      return
-    }
-
-    // Проверяем статус ответа для других кодов
-    if (!response.ok) {
-      // Пытаемся получить сообщение об ошибке
-      try {
-        const errorData = await response.json()
-        throw new Error(errorData.message || `Ошибка регистрации: ${response.status}`)
-      } catch {
-        throw new Error(`Ошибка регистрации: ${response.status}`)
-      }
-    }
-
-    // Проверяем, есть ли контент в ответе
-    const contentType = response.headers.get('content-type')
-    if (contentType && contentType.includes('application/json')) {
-      try {
-        const data = await response.json()
-        console.log('Ответ сервера:', data)
-      } catch (e) {
-        console.log('Пустой JSON ответ или неверный формат')
-      }
-    }
-
-    // Считаем регистрацию успешной при статусе 200 или 201
-    alert('Регистрация успешна! Теперь войдите.')
-    
-    // Закрываем форму регистрации
-    const btn = materialButton.value
-    btn.click()
-    
-    // Очищаем форму
-    registerForm.login = ''
-    registerForm.password = ''
-    registerForm.userName = ''
-  } catch (error) {
-    console.error('Ошибка регистрации:', error)
-    alert(error.message)
-  }
-}
-
 // Инициализация при монтировании
 onMounted(() => {
   const inputs = document.querySelectorAll('.input input')
@@ -438,6 +393,10 @@ onMounted(() => {
   font-size: 14px;
   width: 100%;
   float: left;
+  padding: 8px;
+  background: rgba(237, 37, 83, 0.1);
+  border-radius: 4px;
+  border: 1px solid rgba(237, 37, 83, 0.2);
 }
 
 .click-efect {
@@ -456,5 +415,17 @@ onMounted(() => {
 .button {
   position: relative;
   overflow: hidden;
+}
+
+/* Стили для отключенных кнопок */
+.button button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.input input:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 </style>

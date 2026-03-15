@@ -267,7 +267,26 @@ onUnmounted(() => {
   
   .chat-sidebar {
     width: 100% !important;
-    max-width: 320px;
+    max-width: none !important;
+    position: relative !important;
+  }
+  
+  .sidebar-header {
+    padding: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  
+  .chat-list {
+    padding-bottom: 20px;
+  }
+  
+  .sidebar-footer {
+    position: sticky;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
   }
 }
 .empty-chats {
